@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    .center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+  </style>
+
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">Audio Manipulator</a>
+  </nav>
+
+  <div class="center container">
+    <div class="row">
+      <div class="col">
+        <div class="search_form_container">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="input-group">
+              <div class="custom-file">
+                <input type="file" class="custom-file-input" id="fileInput" name="d" onchange="updateFileNameLabel()">
+                <label class="custom-file-label" for="fileInput">Choose file</label>
+              </div>
+              <div class="input-group-append">
+                <button class="btn btn-primary" type="submit">Upload file</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    function updateFileNameLabel() {
+      var fileInput = document.getElementById('fileInput');
+      var fileNameLabel = fileInput.nextElementSibling;
+      fileNameLabel.innerText = fileInput.files[0].name;
+    }
+  </script>
+</body>
+
+</html>

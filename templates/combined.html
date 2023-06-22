@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    .center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+  </style>
+
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">Audio Manipulator</a>
+  </nav>
+
+  <div class="center container">
+    <div class="row">
+      <div class="col">
+
+        <div id="player">
+            <div id="audio"></div>
+            <canvas id="canvas"></canvas>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    function updateFileNameLabel() {
+      var fileInput = document.getElementById('fileInput');
+      var fileNameLabel = fileInput.nextElementSibling;
+      fileNameLabel.innerText = fileInput.files[0].name;
+    }
+    var canvas,
+    ctx,
+    source,
+    context,
+    analyser,
+    fbc_array,
+    bar_count,
+    bar_pos,
+    bar_width,
+    bar_height;
+
+var audio = new Audio();
+
+audio.src = "/media/combined.wav";
+audio.controls = true;
+audio.loop = false;
+audio.autoplay = true;
+
+window.addEventListener(
+    "load",
+    function() {
+        document.getElementById("audio").appendChild(audio);
+
+        context = new AudioContext();
+        analyser = context.createAnalyser();
+        canvas = document.getElementById("canvas");
+        ctx = canvas.getContext("2d");
+        source = context.createMediaElementSource(audio);
+
+        canvas.width = window.innerWidth * 0.80;
+        canvas.height = window.innerHeight * 0.60;
+
+        source.connect(analyser);
+        analyser.connect(context.destination);
+
+        FrameLooper();
+    },
+    false
+);
+
+function FrameLooper() {
+    window.RequestAnimationFrame =
+        window.requestAnimationFrame(FrameLooper) ||
+        window.msRequestAnimationFrame(FrameLooper) ||
+        window.mozRequestAnimationFrame(FrameLooper) ||
+        window.webkitRequestAnimationFrame(FrameLooper);
+
+    fbc_array = new Uint8Array(analyser.frequencyBinCount);
+    bar_count = window.innerWidth / 2;
+
+    analyser.getByteFrequencyData(fbc_array);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#FF0000";
+
+    for (var i = 0; i < bar_count; i++) {
+        bar_pos = i * 4;
+        bar_width = 20;
+        bar_height = -fbc_array[i];
+        //ctx.fillStyle = "rgb(" + i + ", " + i + ", " + 205 + ")"
+        ctx.fillRect(600, canvas.height, bar_width, bar_height);
+    }
+}
+  </script>
+</body>
+
+</html>
