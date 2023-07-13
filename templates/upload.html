@@ -6,15 +6,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upload</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.2/min/dropzone.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <style>
-    .center {
+    #waveform {
+      width: 100%;
+    }
+    #waveform-two {
+      width: 100%;
+    }
+    .vertical-table th, .vertical-table td {
+      text-align: left;
+    }
+    .vertical-table th {
+      width: 150px;
+    }
+    .controls {
       display: flex;
       justify-content: center;
-      align-items: center;
-      height: 100vh;
+      margin-top: 10px;
     }
-  </style>
+    .dropzone {
+      display: flex;
+      justify-content: center;
+    }
+    /* Optional styling for the slider */
+    input[type="range"] {
+      width: 300px;
+      height: 10px;
+      -webkit-appearance: none;
+      background-color: #ddd;
+      border-radius: 5px;
+    }
 
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      background-color: #333;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    /* Optional styling for the slider */
+    .slider {
+      width: 300px;
+      height: 10px;
+      -webkit-appearance: none;
+      background-color: #ddd;
+      border-radius: 5px;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      background-color: #333;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .slider-value {
+      display: inline-block;
+      width: 60px;
+      text-align: center;
+    }    
+  </style>
 </head>
 
 <body>
@@ -22,37 +78,1048 @@
     <a class="navbar-brand" href="#">Audio Manipulator</a>
   </nav>
 
-  <div class="center container">
-    <div class="row">
-      <div class="col">
-        <div class="search_form_container">
-          <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="input-group">
-              <div class="custom-file">
-                <input type="file" class="custom-file-input" id="fileInput" name="d" onchange="updateFileNameLabel()">
-                <label class="custom-file-label" for="fileInput">Choose file</label>
+  <div id="message-alert" class="alert alert-success alert-dismissible fade show" role="alert" style="display: none;">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <strong>Success!</strong> Your message here.
+  </div>
+
+  <div class="container mt-4">
+    <div class="row">      
+      <div class="col-sm">
+        <div class="card">
+          <form action="{% url 'upload-trackone' %}" class="dropzone" id="file-upload">
+            {% csrf_token %} <!-- Add CSRF token -->
+            <div class="dz-message">
+              <p>You can drag-and-drop an audio file onto the window, choose from an example file below, or use the open file button to select a file to open from your computer.</p>
+              <hr>
+              <button style="width:100%;" type="button" class="btn btn-primary" id="open-file-button"><span class="fa fa-folder-open"></span><span>&nbsp;&nbsp; Choose Local File</span></button>
+              <hr>
+            </div>
+          </form>
+          <div id="waveform"></div>
+          <div class="controls mb-4">
+            <button class="btn btn-primary" id="play-button"><i class="fa fa-play"></i></button>
+            <button class="btn btn-primary ml-1" id="rewind-button"><i class="fa fa-backward"></i></button>
+            <button class="btn btn-primary ml-1" id="forward-button"><i class="fa fa-forward"></i></button>
+          </div>
+          <table class="table vertical-table">
+            <tbody>
+              <tr>
+                <th>Name</th>
+                <td id="name-column"></td>
+              </tr>
+              <tr>
+                <th>Sample Rate</th>
+                <td id="sample-rate-column"></td>
+              </tr>
+              <tr>
+                <th>Channels</th>
+                <td id="channels-column"></td>
+              </tr>
+              <tr>
+                <th>Sample Count</th>
+                <td id="sample-count-column"></td>
+              </tr>
+              <tr>
+                <th>Duration (sec)</th>
+                <td id="duration-column"></td>
+              </tr>
+            </tbody>
+          </table>  
+          <hr>
+          <form action="{% url 'upload-trackone-edit' %}" id="upload-trackone-edit-form">
+            <input name="filename" type="hidden" id="upload-trackone-edit-filename"/>
+            <div class="form-group ml-2 mr-2">
+              <label for="track-one-tempo">Tempo</label>
+              <input type="range" class="form-control slider" id="track-one-tempo" name="track-one-tempo"  min="0" max="2" step="0.1" value="1">
+              <span class="slider-value">1</span>
+            </div>
+            <div class="form-group ml-2 mr-2">
+              <label for="track-one-pitch">Pitch</label>
+              <input type="range" class="form-control slider" id="track-one-pitch" name="track-one-pitch"  min="0" max="2" step="0.1" value="1">
+              <span class="slider-value">1</span>
+            </div>
+            <label for="track-sample-rate-checkbox" class="d-flex align-items-center">
+              <input class="mr-2 ml-2" disabled name="track-sample-rate-checkbox" type="checkbox" id="track-sample-rate-checkbox">
+              Sample Rate and Channels
+            </label>
+            <div class="card" id="track-sample-rate-card" style="display: none;">
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="track-sample-rate">Adjust Sample Rate</label>
+                  <input type="range" class="slider form-control" id="track-sample-rate" name="track-sample-rate" min="8000" max="192000" step="100" value="44100">
+                  <span class="slider-value">44100</span>
+                </div>
+                <div class="form-group">
+                  <label for="track-channels">Adjust Channels</label>
+                  <select class="form-control" name="track-channels">
+                    <option value="1">Mono</option>
+                    <option value="2">Stereo</option>
+                    <option value="6">5.1 Surround</option>
+                    <option value="8">7.1 Surround</option>
+                  </select>                    
+                </div>
               </div>
-              <div class="input-group-append">
-                <button class="btn btn-primary" type="submit">Upload file</button>
+            </div>  
+            <label for="slice-trim-checkbox" class="d-flex align-items-center">
+              <input class="mr-2 ml-2" disabled name="slice-trim-checkbox" type="checkbox" id="slice-trim-checkbox">
+              Slicing and Trimming
+            </label>
+            <div class="card" id="slice-trim-card" style="display: none;">
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="slice-end-track-one">Slice End Time (in seconds)</label>
+                  <input type="number" class="form-control" id="slice-end-track-one" name="slice-end-track-one" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                  <label for="slice-start-track-one">Slice Start Time (in seconds)</label>
+                  <input type="number" class="form-control" id="slice-start-track-one" name="slice-start-track-one" step="0.01" min="0">
+                </div>
               </div>
             </div>
+            <label for="track-one-noise-separator-checkbox" class="d-flex align-items-center">
+              <input class="mr-2 ml-2" disabled name="track-one-noise-separator-checkbox" type="checkbox" id="track-one-noise-separator-checkbox">
+              Noise Removal
+            </label>
+            <button type="submit" disabled class="btn btn-primary btn-block mt-2 mb-2" id="upload-trackone-edit-form-submit">Process</button>
           </form>
         </div>
       </div>
+      <div class="col-sm">
+        <div class="card">
+          <form action="{% url 'upload-tracktwo' %}" class="dropzone" id="file-upload-two">
+            {% csrf_token %} <!-- Add CSRF token -->
+            <div class="dz-message">
+              <!-- Same content as the first dropzone -->
+              <p>You can drag-and-drop an audio file onto the window, choose from an example file below, or use the open file button to select a file to open from your computer.</p>
+              <hr>
+              <button style="width:100%;" type="button" class="btn btn-primary" id="open-file-button-two"><span class="fa fa-folder-open"></span><span>&nbsp;&nbsp; Choose Local File</span></button>
+              <hr>
+            </div>
+          </form>
+          <div id="waveform-two"></div>
+          <div class="controls mb-4">
+            <!-- Update button IDs for the second column -->
+            <button class="btn btn-primary" id="play-button-two"><i class="fa fa-play"></i></button>
+            <button class="btn btn-primary ml-1" id="rewind-button-two"><i class="fa fa-backward"></i></button>
+            <button class="btn btn-primary ml-1" id="forward-button-two"><i class="fa fa-forward"></i></button>
+          </div>
+          <table class="table vertical-table">
+            <!-- Same table structure as the first column -->
+            <tbody>
+              <tr>
+                <th>Name</th>
+                <td id="name-column-two"></td>
+              </tr>
+              <tr>
+                <th>Sample Rate</th>
+                <td id="sample-rate-column-two"></td>
+              </tr>
+              <tr>
+                <th>Channels</th>
+                <td id="channels-column-two"></td>
+              </tr>
+              <tr>
+                <th>Sample Count</th>
+                <td id="sample-count-column-two"></td>
+              </tr>
+              <tr>
+                <th>Duration (sec)</th>
+                <td id="duration-column-two"></td>
+              </tr>
+            </tbody>
+          </table>  
+          <hr>
+          <form action="{% url 'upload-tracktwo-edit' %}" id="upload-tracktwo-edit-form">
+            <input name="filename" type="hidden" id="upload-tracktwo-edit-filename"/>
+            <div class="form-group ml-2 mr-2">
+              <label for="track-two-tempo">Tempo</label>
+              <input type="range" class="form-control slider" id="track-two-tempo" name="track-two-tempo"  min="0" max="2" step="0.1" value="1">
+              <span class="slider-value">1</span>
+            </div>
+            <div class="form-group ml-2 mr-2">
+              <label for="track-two-pitch">Pitch</label>
+              <input type="range" class="form-control slider" id="track-two-pitch" name="track-two-pitch"  min="0" max="2" step="0.1" value="1">
+              <span class="slider-value">1</span>
+            </div>
+            <label for="track-two-sample-rate-checkbox" class="d-flex align-items-center">
+              <input class="mr-2 ml-2" disabled name="track-two-sample-rate-checkbox" type="checkbox" id="track-two-sample-rate-checkbox">
+              Sample Rate and Channels
+            </label>
+            <div class="card" id="track-two-sample-rate-card" style="display: none;">
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="track-two-sample-rate">Adjust Sample Rate</label>
+                  <input type="range" class="slider form-control" id="track-two-sample-rate" name="track-two-sample-rate" min="8000" max="192000" step="100" value="44100">
+                  <span class="slider-value">44100</span>
+                </div>
+                <div class="form-group">
+                  <label for="track-two-channels">Adjust Channels</label>
+                  <select class="form-control" name="track-two-channels">
+                    <option value="1">Mono</option>
+                    <option value="2">Stereo</option>
+                    <option value="6">5.1 Surround</option>
+                    <option value="8">7.1 Surround</option>
+                  </select>                    
+                </div>
+              </div>
+            </div>  
+            <label for="slice-trim-two-checkbox" class="d-flex align-items-center">
+              <input class="mr-2 ml-2" disabled name="slice-trim-two-checkbox" type="checkbox" id="slice-trim-two-checkbox">
+              Slicing and Trimming 
+            </label>
+            <div class="card" id="slice-trim-two-card" style="display: none;">
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="slice-end-track-two">Slice End Time (in seconds)</label>
+                  <input type="number" class="form-control" id="slice-end-track-two" name="slice-end-track-two" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                  <label for="slice-start-track-two">Slice Start Time (in seconds)</label>
+                  <input type="number" class="form-control" id="slice-start-track-two" name="slice-start-track-two" step="0.01" min="0">
+                </div>
+              </div>
+            </div>            
+            <label for="track-two-noise-separator-checkbox" class="d-flex align-items-center">
+              <input class="mr-2 ml-2" disabled name="track-two-noise-separator-checkbox" type="checkbox" id="track-two-noise-separator-checkbox">
+              Noise Removal
+            </label>
+            <button type="submit" disabled class="btn btn-primary btn-block mt-2 mb-2" id="upload-tracktwo-edit-form-submit">Process</button>
+          </form>
+        </div>
+      </div>
+      <div class="col-sm">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Audio Output Settings</h5>
+            <form id="output-form" action="{% url 'finalize-track-edit' %}">
+              <input name="trackone" type="hidden" id="upload-trackone-edit-filename-final"/>
+              <input name="tracktwo" type="hidden" id="upload-tracktwo-edit-filename-final"/>
+              <label for="track-volume-checkbox" class="d-flex align-items-center">
+                <input class="mr-2 ml-2" name="track-volume-checkbox" type="checkbox" id="track-volume-checkbox">
+                Track One Volume Manupilation
+              </label>
+              <div class="card" id="track-volume-card" style="display: none;">
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="track-volume">Adjust Volume in decibals</label>
+                    <input type="range" class="slider form-control" id="track-volume" name="track-volume" min="-50" max="50" step="1" value="0">
+                    <span class="slider-value">0</span>
+                  </div>
+                </div>
+              </div>  
+              <label for="track-two-volume-checkbox" class="d-flex align-items-center">
+                <input class="mr-2 ml-2" name="track-two-volume-checkbox" type="checkbox" id="track-two-volume-checkbox">
+                Track Two Volume Manupilation
+              </label>
+              <div class="card" id="track-two-volume-card" style="display: none;">
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="track-two-volume">Adjust Volume in decibals</label>
+                    <input type="range" class="slider form-control" id="track-two-volume" name="track-two-volume"  min="-50" max="50" step="1" value="0">
+                    <span class="slider-value">0</span>
+                  </div>
+                </div>
+              </div>  
+              <label for="track-audio-filters-checkbox" class="d-flex align-items-center">
+                <input class="mr-2 ml-2" name="track-audio-filters-checkbox" type="checkbox" id="track-audio-filters-checkbox">
+                Audio Filters
+              </label>
+              <div class="card" id="track-audio-filters-card" style="display: none;">
+                <div class="card-body">
+                  <label for="track-audio-filters-low-pass-checkbox" class="d-flex align-items-center">
+                    <input class="mr-2 ml-2" name="track-audio-filters-pass-checkbox" type="radio" checked id="track-audio-filters-low-pass-checkbox" value="low-pass">
+                    Low Pass
+                  </label>
+                  <div class="card" id="track-audio-filters-low-pass-card">
+                    <div class="card-body">
+                      <div class="form-group">
+                        <label for="track-low-pass">Adjust Low Pass</label>
+                        <input type="number" class="form-control" id="track-low-pass" name="track-low-pass" min="0" step="1" value="0">
+                      </div>
+                    </div>
+                  </div>              
+                  <label for="track-audio-filters-high-pass-checkbox" class="d-flex align-items-center">
+                    <input class="mr-2 ml-2" name="track-audio-filters-pass-checkbox" type="radio" id="track-audio-filters-high-pass-checkbox" value="high-pass">
+                    High Pass
+                  </label>
+                  <div class="card" id="track-audio-filters-high-pass-card" style="display: none;">
+                    <div class="card-body">
+                      <div class="form-group">
+                        <label for="track-high-pass">Adjust High Pass</label>
+                        <input type="number" class="form-control" id="track-high-pass" name="track-high-pass" min="0" step="1" value="0">
+                      </div>
+                    </div>
+                  </div>              
+                  <label for="track-audio-filters-band-pass-checkbox" class="d-flex align-items-center">
+                    <input class="mr-2 ml-2" name="track-audio-filters-pass-checkbox" type="radio" id="track-audio-filters-band-pass-checkbox" value="band-pass">
+                    Band Pass
+                  </label>
+                  <div class="card" id="track-audio-filters-band-pass-card" style="display: none;">
+                    <div class="card-body">
+                      <div class="form-group">
+                        <label for="track-band-pass-low">Adjust Band Pass Low</label>
+                        <input type="number" class="form-control" id="track-band-pass-low" name="track-band-pass-low" min="0" step="1" value="0">
+                      </div>
+                      <div class="form-group">
+                        <label for="track-band-pass-high">Adjust Band Pass High</label>
+                        <input type="number" class="form-control" id="track-band-pass-high" name="track-band-pass-high" min="0" step="1" value="0">
+                      </div>
+                    </div>
+                  </div>                  
+                </div>
+              </div>              
+              <div class="form-group">
+                <label for="panoramic-range">Panning Range</label>
+                <input type="range" class="slider form-control" id="panoramic-range" name="panoramic-range"  min="-1" max="1" step="0.1" value="0">
+                <span class="slider-value">0</span>
+              </div>
+              <div class="form-group">
+                <label for="concatenation-format">Concatenation</label>
+                <select class="form-control" id="concatenation-format" name="concatenation-format">
+                  <option value="overlay">Overlay</option>
+                  <option value="append">Append</option>
+                </select>
+              </div>
+              <div class="form-group" id="concatenation-loop">
+                <label for="concatenation-format">Select Track Loop</label>
+                <select class="form-control" name="concatenation-loop">
+                  <option value="0">None</option>
+                  <option value="1">Track One</option>
+                  <option value="2">Track Two</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="output-format">Output Format</label>
+                <select class="form-control" id="output-format" name="output-format">
+                  <option value="mp3">MP3</option>
+                  <option value="wav">WAV</option>
+                  <option value="ogg">OGG</option>
+                </select>
+              </div>
+              <button type="submit" disabled class="btn btn-primary btn-block" id="finalize-track-edit-submit">Convert</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Audio Output</h5>
+            <hr>
+            <div id="waveform-final"></div>
+            <div class="controls mb-4">
+              <!-- Update button IDs for the second column -->
+              <button class="btn btn-primary" id="play-button-final"><i class="fa fa-play"></i></button>
+              <button class="btn btn-primary ml-1" id="rewind-button-final"><i class="fa fa-backward"></i></button>
+              <button class="btn btn-primary ml-1" id="forward-button-final"><i class="fa fa-forward"></i></button>
+              <button class="btn btn-primary ml-1" id="download-button-final"><i class="fa fa-arrow-down"></i></button>
+            </div>
+            <table class="table vertical-table">
+              <!-- Same table structure as the first column -->
+              <tbody>
+                <tr>
+                  <th>Name</th>
+                  <td id="name-column-final"></td>
+                </tr>
+                <tr>
+                  <th>Sample Rate</th>
+                  <td id="sample-rate-column-final"></td>
+                </tr>
+                <tr>
+                  <th>Channels</th>
+                  <td id="channels-column-final"></td>
+                </tr>
+                <tr>
+                  <th>Sample Count</th>
+                  <td id="sample-count-column-final"></td>
+                </tr>
+                <tr>
+                  <th>Duration (sec)</th>
+                  <td id="duration-column-final"></td>
+                </tr>
+              </tbody>
+            </table>  
+          </div>
+        </div>
+      </div>
+      
     </div>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <footer class="footer mt-4">
+    <div class="container">
+      <p class="text-center">&copy; 2023 Developer with <i class="fa fa-heart text-danger"></i> by <a href="https://github.com/ebartile"><b>Bartile Emmanuel</b></a> for Randeep Singh. All rights reserved.</p>
+    </div>
+  </footer>
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.2/min/dropzone.min.js"></script>
+  <script src="https://unpkg.com/wavesurfer.js"></script>
   <script>
-    function updateFileNameLabel() {
-      var fileInput = document.getElementById('fileInput');
-      var fileNameLabel = fileInput.nextElementSibling;
-      fileNameLabel.innerText = fileInput.files[0].name;
+    var wavesurfer = null; // Variable to store the wavesurfer instance
+    // Initialize Dropzone
+    Dropzone.options.fileUpload = {
+      paramName: "file", // Name of the file input field
+      maxFilesize: 10, // Maximum file size in MB
+      maxFiles: 1, // Limit the number of files to 1
+      acceptedFiles: "audio/*", // Only accept audio files
+      init: function () {
+        var self = this; // Save a reference to the Dropzone instance
+
+        this.on("addedfile", function (file) {
+          // Remove the previous file before adding the new one
+          if (this.files.length > 1) {
+            this.removeFile(this.files[0]);
+          }
+        });
+        this.on("success", function (file, response) {
+          // Handle successful file upload
+          if (response.success) {
+            $("#track-sample-rate-checkbox").prop('disabled', false);
+            $("#slice-trim-checkbox").prop('disabled', false);
+            $("#track-one-noise-separator-checkbox").prop('disabled', false);
+            addTableRow(response.data);
+  
+            // Clear the previous waveform if it exists
+            if (wavesurfer !== null) {
+              wavesurfer.destroy();
+            }
+
+            // Create a new wavesurfer instance and load the file
+            wavesurfer = WaveSurfer.create({
+              container: "#waveform",
+              waveColor: "blue",
+              progressColor: "purple",
+              barWidth: 2
+            });
+
+            wavesurfer.load(response.data.fileUrl);
+
+            // Play button event handler
+            $("#play-button").off("click").on("click", function () {
+              if (wavesurfer.isPlaying()) {
+                wavesurfer.pause();
+                $("#play-button i").removeClass("fa-pause").addClass("fa-play");
+              } else {
+                wavesurfer.play();
+                $("#play-button i").removeClass("fa-play").addClass("fa-pause");
+              }
+            });
+
+            // Rewind button event handler
+            $("#rewind-button").click(function () {
+              wavesurfer.skipBackward(5);
+            });
+
+            // Forward button event handler
+            $("#forward-button").click(function () {
+              wavesurfer.skipForward(5);
+            });
+          }
+        });
+      }
+    };
+
+    var wavesurferTwo = null; // Variable to store the wavesurfer instance
+
+    Dropzone.options.fileUploadTwo = {
+      paramName: "file", // Name of the file input field
+      maxFilesize: 10, // Maximum file size in MB
+      maxFiles: 1, // Limit the number of files to 1
+      acceptedFiles: "audio/*", // Only accept audio files
+      init: function () {
+        var self = this; // Save a reference to the Dropzone instance
+
+        this.on("addedfile", function (file) {
+          // Remove the previous file before adding the new one
+          if (this.files.length > 1) {
+            this.removeFile(this.files[0]);
+          }
+        });
+        this.on("success", function (file, response) {
+          // Handle successful file upload
+          if (response.success) {
+            $("#track-two-sample-rate-checkbox").prop('disabled', false);
+            $("#slice-trim-two-checkbox").prop('disabled', false);
+            $("#track-two-noise-separator-checkbox").prop('disabled', false);
+            addTableRowTwo(response.data);
+          // Clear the previous waveform if it exists
+          if (wavesurferTwo !== null) {
+              wavesurferTwo.destroy();
+          }
+
+            // Create a new wavesurfer instance and load the file
+            wavesurferTwo = WaveSurfer.create({
+              container: "#waveform-two",
+              waveColor: "blue",
+              progressColor: "purple",
+              barWidth: 2
+            });
+
+            wavesurferTwo.load(response.data.fileUrl);
+
+            // Play button event handler
+            $("#play-button-two").off("click").on("click", function () {
+              if (wavesurferTwo.isPlaying()) {
+                wavesurferTwo.pause();
+                $("#play-button-two i").removeClass("fa-pause").addClass("fa-play");
+              } else {
+                wavesurferTwo.play();
+                $("#play-button-two i").removeClass("fa-play").addClass("fa-pause");
+              }
+            });
+
+            // Rewind button event handler
+            $("#rewind-button-two").click(function () {
+              wavesurferTwo.skipBackward(5);
+            });
+
+            // Forward button event handler
+            $("#forward-button-two").click(function () {
+              wavesurferTwo.skipForward(5);
+            });            
+          }
+        });
+      }
+    };
+
+    function addTableRow(data) {
+      $("#upload-trackone-edit-filename").val(data.name)
+      $("#upload-trackone-edit-filename-final").val(data.name)
+      $("#name-column").text(data.name);
+      $("#sample-rate-column").text(data.sampleRate);
+      $("#track-low-pass").attr("max", data.sampleRate/2);
+      $("#track-high-pass").attr("max", data.sampleRate);
+      $("#track-band-pass-low").attr("max", data.sampleRate);
+      $("#track-band-pass-high").attr("max", data.sampleRate);
+      $("#channels-column").text(data.numChannels);
+      $("#sample-count-column").text(data.numSamples);
+      $("#duration-column").text(data.duration);
+      if ($('#upload-trackone-edit-filename').val() && $('#upload-tracktwo-edit-filename').val()) {
+        $('#finalize-track-edit-submit').prop('disabled', false);
+      } else {
+        $('#finalize-track-edit-submit').prop('disabled', true);
+      }
     }
-  </script>
+
+    function addTableRowTwo(data) {
+      $("#upload-tracktwo-edit-filename").val(data.name)
+      $("#upload-tracktwo-edit-filename-final").val(data.name)
+      $("#name-column-two").text(data.name);
+      $("#sample-rate-column-two").text(data.sampleRate);
+      $("#track-low-pass").attr("max", data.sampleRate/2);
+      $("#track-high-pass").attr("max", data.sampleRate);
+      $("#track-band-pass-low").attr("max", data.sampleRate);
+      $("#track-band-pass-high").attr("max", data.sampleRate);
+      $("#channels-column-two").text(data.numChannels);
+      $("#sample-count-column-two").text(data.numSamples);
+      $("#duration-column-two").text(data.duration);
+      if ($('#upload-trackone-edit-filename').val() && $('#upload-tracktwo-edit-filename').val()) {
+        $('#finalize-track-edit-submit').prop('disabled', false);
+      } else {
+        $('#finalize-track-edit-submit').prop('disabled', true);
+      }
+    }
+
+  $(document).ready(function () {
+
+    $('#slice-trim-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $("#upload-trackone-edit-form-submit").prop('disabled', false);
+        $('#slice-trim-card').show();
+      } else {
+        $('#slice-trim-card').hide();
+      }
+    });
+    $('#track-audio-filters-low-pass-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $('#track-audio-filters-low-pass-card').show();
+        $('#track-audio-filters-high-pass-card').hide();
+        $('#track-audio-filters-band-pass-card').hide();
+      } else {
+        $('#track-audio-filters-low-pass-card').hide();
+      }
+    });
+    $('#track-audio-filters-high-pass-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $('#track-audio-filters-high-pass-card').show();
+        $('#track-audio-filters-low-pass-card').hide();
+        $('#track-audio-filters-band-pass-card').hide();
+      } else {
+        $('#track-audio-filters-high-pass-card').hide();
+      }
+    });
+    $('#track-audio-filters-band-pass-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $('#track-audio-filters-band-pass-card').show();
+        $('#track-audio-filters-low-pass-card').hide();
+        $('#track-audio-filters-high-pass-card').hide();
+      } else {
+        $('#track-audio-filters-band-pass-card').hide();
+      }
+    });
+    $('#track-audio-filters-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $('#track-audio-filters-card').show();
+      } else {
+        $('#track-audio-filters-card').hide();
+      }
+    });
+    $('#track-sample-rate-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $("#upload-trackone-edit-form-submit").prop('disabled', false);
+        $('#track-sample-rate-card').show();
+      } else {
+        $('#track-sample-rate-card').hide();
+      }
+    });    
+    $('#track-two-tempo').change(function() {
+      $("#upload-tracktwo-edit-form-submit").prop('disabled', false);
+    });
+    $('#track-two-pitch').change(function() {
+      $("#upload-tracktwo-edit-form-submit").prop('disabled', false);
+    });
+    $('#track-one-tempo').change(function() {
+      $("#upload-trackone-edit-form-submit").prop('disabled', false);
+    });
+    $('#track-one-pitch').change(function() {
+      $("#upload-trackone-edit-form-submit").prop('disabled', false);
+    });
+    $('#slice-trim-two-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $("#upload-tracktwo-edit-form-submit").prop('disabled', false);
+        $('#slice-trim-two-card').show();
+      } else {
+        $('#slice-trim-two-card').hide();
+      }
+    });
+    $('#track-two-sample-rate-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $("#upload-tracktwo-edit-form-submit").prop('disabled', false);
+        $('#track-two-sample-rate-card').show();
+      } else {
+        $('#track-two-sample-rate-card').hide();
+      }
+    });    
+    $('#track-volume-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $("#upload-trackone-edit-form-submit").prop('disabled', false);
+        $('#track-volume-card').show();
+      } else {
+        $('#track-volume-card').hide();
+      }
+    });    
+
+    $('#track-two-volume-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $("#upload-tracktwo-edit-form-submit").prop('disabled', false);
+        $('#track-two-volume-card').show();
+      } else {
+        $('#track-two-volume-card').hide();
+      }
+    });    
+
+    $('#track-one-noise-separator-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $("#upload-trackone-edit-form-submit").prop('disabled', false);
+      }
+    });    
+
+    $('#track-two-noise-separator-checkbox').change(function() {
+      if ($(this).is(':checked')) {
+        $("#upload-tracktwo-edit-form-submit").prop('disabled', false);
+      }
+    });    
+
+    // Track One
+    $("#slice-start-track-one").on("input", function () {
+      var startSliceTime = parseFloat($(this).val());
+      var endSliceTime = parseFloat($("#slice-end-track-one").val());
+      var audioLength = parseFloat($("#duration-column").text());
+
+      if (startSliceTime < 0) {
+        $(this).val(0);
+        startSliceTime = 0;
+      }
+
+      if (startSliceTime > endSliceTime) {
+        $(this).val(endSliceTime);
+        startSliceTime = endSliceTime;
+      }
+
+      if (endSliceTime > audioLength) {
+        $("#slice-end-track-one").val(audioLength);
+        endSliceTime = audioLength;
+      }
+    });
+
+    $("#slice-end-track-one").on("input", function () {
+      var startSliceTime = parseFloat($("#slice-start-track-one").val());
+      var endSliceTime = parseFloat($(this).val());
+      var audioLength = parseFloat($("#duration-column").text());
+
+      if (endSliceTime > audioLength) {
+        $(this).val(audioLength);
+        endSliceTime = audioLength;
+      }
+
+      if (endSliceTime < startSliceTime) {
+        $(this).val(startSliceTime);
+        endSliceTime = startSliceTime;
+      }
+    });
+
+    // Track Two
+    $("#slice-start-track-two").on("input", function () {
+      var startSliceTime = parseFloat($(this).val());
+      var endSliceTime = parseFloat($("#slice-end-track-two").val());
+      var audioLength = parseFloat($("#duration-column-two").text());
+
+      if (startSliceTime < 0) {
+        $(this).val(0);
+        startSliceTime = 0;
+      }
+
+      if (startSliceTime > endSliceTime) {
+        $(this).val(endSliceTime);
+        startSliceTime = endSliceTime;
+      }
+
+      if (endSliceTime > audioLength) {
+        $("#slice-end-track-two").val(audioLength);
+        endSliceTime = audioLength;
+      }
+    });
+
+    $("#slice-end-track-two").on("input", function () {
+      var startSliceTime = parseFloat($("#slice-start-track-two").val());
+      var endSliceTime = parseFloat($(this).val());
+      var audioLength = parseFloat($("#duration-column-two").text());
+
+      if (endSliceTime > audioLength) {
+        $(this).val(audioLength);
+        endSliceTime = audioLength;
+      }
+
+      if (endSliceTime < startSliceTime) {
+        $(this).val(startSliceTime);
+        endSliceTime = startSliceTime;
+      }
+    });
+
+  var wavesurferFinal = null; // Variable to store the wavesurfer instance
+
+  $('#output-form').submit(function(event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    $("#finalize-track-edit-submit").prop('disabled', true);
+    $("#finalize-track-edit-submit").html('<i class="fas fa-spinner fa-spin"></i> Loading...');
+
+    var form = $(this);
+    var formData = new FormData(form[0]);
+
+    $.ajax({
+      url: form.attr('action'),
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response) {
+        if (response.success) {
+          // Update the UI with edited audio properties
+          $("#name-column-final").text(response.data.name);
+          $("#sample-rate-column-final").text(response.data.sampleRate);
+          $("#channels-column-final").text(response.data.numChannels);
+          $("#sample-count-column-final").text(response.data.numSamples);
+          $("#duration-column-final").text(response.data.duration);
+          $("#message-alert").removeClass("alert-success alert-danger").addClass("alert-success");
+          $("#message-alert strong").html("Success!");
+          $("#message-alert").fadeIn();
+          $("#message-alert").html("<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button>" + "File processed successfully!");          
+          $('html, body').animate({ scrollTop: $('#message-alert').offset().top }, 'slow');
+            // Clear the previous waveform if it exists
+            if (wavesurferFinal !== null) {
+              wavesurferFinal.destroy();
+            }
+
+            // Create a new wavesurfer instance and load the file
+            wavesurferFinal = WaveSurfer.create({
+              container: "#waveform-final",
+              waveColor: "blue",
+              progressColor: "purple",
+              barWidth: 2
+            });
+
+            wavesurferFinal.load(response.data.fileUrl);
+
+            $("#download-button-final").click(function() {
+              var fileName = response.data.fileUrl.substring(response.data.fileUrl.lastIndexOf('/') + 1);
+              $('<a>', {
+                href: response.data.fileUrl,
+                download: fileName
+              })[0].click();              
+            });
+
+            // Play button event handler
+            $("#play-button-final i").removeClass("fa-pause").addClass("fa-play");
+            $("#play-button-final").off("click").on("click", function () {
+              if (wavesurferFinal.isPlaying()) {
+                wavesurferFinal.pause();
+                $("#play-button-final i").removeClass("fa-pause").addClass("fa-play");
+              } else {
+                wavesurferFinal.play();
+                $("#play-button-final i").removeClass("fa-play").addClass("fa-pause");
+              }
+            });
+
+            // Rewind button event handler
+            $("#rewind-button-final").click(function () {
+              wavesurferFinal.skipBackward(5);
+            });
+
+            // Forward button event handler
+            $("#forward-button-final").click(function () {
+              wavesurferFinal.skipForward(5);
+            });            
+        } else {
+          $("#message-alert").removeClass("alert-success alert-danger").addClass("alert-danger");
+          $("#message-alert strong").html("Error!");
+          $("#message-alert").fadeIn();
+          $("#message-alert").html("<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button>" + response.error);          
+          $('html, body').animate({ scrollTop: $('#message-alert').offset().top }, 'slow');
+        }
+      },
+      error: function() {
+        $("#message-alert").removeClass("alert-success alert-danger").addClass("alert-danger");
+        $("#message-alert strong").html("Error!");
+        $("#message-alert").fadeIn();
+        $("#message-alert").html("<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button>" + "Failed to process and edit the file.");          
+        $('html, body').animate({ scrollTop: $('#message-alert').offset().top }, 'slow');
+      },
+      complete: function() {
+          // Enable the submit button
+          $('#finalize-track-edit-submit').prop('disabled', false);
+          // Restore the original text of the submit button
+          $('#finalize-track-edit-submit').html('Convert');
+          $('#finalize-track-edit-submit').find('.fas.fa-spinner.fa-spin').remove();
+      }
+    });
+  });
+
+  // Track One form submission
+  $('#upload-trackone-edit-form').submit(function(event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    $("#upload-trackone-edit-form-submit").prop('disabled', true);
+    $("#upload-trackone-edit-form-submit").html('<i class="fas fa-spinner fa-spin"></i> Loading...');
+
+    var form = $(this);
+    var formData = new FormData(form[0]);
+
+    $.ajax({
+      url: form.attr('action'),
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response) {
+        if (response.success) {
+          // Update the UI with edited audio properties
+          $("#upload-trackone-edit-filename").val(response.data.name)
+          $("#upload-trackone-edit-filename-final").val(response.data.name)
+          $("#name-column").text(response.data.name);
+          $("#sample-rate-column").text(response.data.sampleRate);
+          $("#channels-column").text(response.data.numChannels);
+          $("#sample-count-column").text(response.data.numSamples);
+          $("#duration-column").text(response.data.duration);
+          $("#message-alert").removeClass("alert-success alert-danger").addClass("alert-success");
+          $("#message-alert strong").html("Success!");
+          $("#message-alert").fadeIn();
+          $("#message-alert").html("<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button>" + "File uploaded and edited successfully!");          
+          $("#track-sample-rate-checkbox").prop("checked", false).trigger("change");
+          $('#slice-trim-checkbox').prop("checked", false).trigger("change");
+          $('#track-volume-checkbox').prop("checked", false).trigger("change");
+          $('html, body').animate({ scrollTop: $('#message-alert').offset().top }, 'slow');
+            // Clear the previous waveform if it exists
+            if (wavesurfer !== null) {
+              wavesurfer.destroy();
+            }
+
+            // Create a new wavesurfer instance and load the file
+            wavesurfer = WaveSurfer.create({
+              container: "#waveform",
+              waveColor: "blue",
+              progressColor: "purple",
+              barWidth: 2
+            });
+
+            wavesurfer.load(response.data.fileUrl);
+
+            // Play button event handler
+            $("#play-button i").removeClass("fa-pause").addClass("fa-play");
+            $("#play-button").off("click").on("click", function () {
+              if (wavesurfer.isPlaying()) {
+                wavesurfer.pause();
+                $("#play-button i").removeClass("fa-pause").addClass("fa-play");
+              } else {
+                wavesurfer.play();
+                $("#play-button i").removeClass("fa-play").addClass("fa-pause");
+              }
+            });
+
+            // Rewind button event handler
+            $("#rewind-button").click(function () {
+              wavesurfer.skipBackward(5);
+            });
+
+            // Forward button event handler
+            $("#forward-button").click(function () {
+              wavesurfer.skipForward(5);
+            });   
+        } else {
+          $("#message-alert").removeClass("alert-success alert-danger").addClass("alert-danger");
+          $("#message-alert strong").html("Error!");
+          $("#message-alert").fadeIn();
+          $("#message-alert").html("<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button>" + response.error);          
+          $('html, body').animate({ scrollTop: $('#message-alert').offset().top }, 'slow');
+        }
+      },
+      error: function() {
+        $("#message-alert").removeClass("alert-success alert-danger").addClass("alert-danger");
+        $("#message-alert strong").html("Error!");
+        $("#message-alert").fadeIn();
+        $("#message-alert").html("<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button>" + "Failed to upload and edit the file.");          
+        $('html, body').animate({ scrollTop: $('#message-alert').offset().top }, 'slow');
+      },
+      complete: function() {
+          // Enable the submit button
+          $('#upload-trackone-edit-form-submit').prop('disabled', false);
+          // Restore the original text of the submit button
+          $('#upload-trackone-edit-form-submit').html('Process');
+          $('#upload-trackone-edit-form-submit').find('.fas.fa-spinner.fa-spin').remove();
+      }
+    });
+  });
+
+  var sliders = document.querySelectorAll(".slider");
+
+  sliders.forEach(function(slider) {
+    var valueDisplay = slider.nextElementSibling;
+  
+    slider.addEventListener("input", function() {
+      valueDisplay.textContent = this.value;
+    });
+  });
+
+  $('#concatenation-format').change(function() {
+    var selectedOption = $(this).val();
+    
+    if (selectedOption === 'overlay') {
+      $('#concatenation-loop').show();
+    } else {
+      $('#concatenation-loop').hide();
+    }
+  });
+
+  // Track Two form submission
+  $('#upload-tracktwo-edit-form').submit(function(event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    $("#upload-tracktwo-edit-form-submit").prop('disabled', true);
+    $("#upload-tracktwo-edit-form-submit").html('<i class="fas fa-spinner fa-spin"></i> Loading...');
+
+    var form = $(this);
+    var formData = new FormData(form[0]);
+
+    $.ajax({
+      url: form.attr('action'),
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response) {
+        if (response.success) {
+          // Update the UI with edited audio properties
+          $("#name-column-two").text(response.data.name);
+          $("#upload-tracktwo-edit-filename-final").val(response.data.name)
+          $("#sample-rate-column-two").text(response.data.sampleRate);
+          $("#channels-column-two").text(response.data.numChannels);
+          $("#sample-count-column-two").text(response.data.numSamples);
+          $("#duration-column-two").text(response.data.duration);
+          $("#message-alert").removeClass("alert-success alert-danger").addClass("alert-success");
+          $("#message-alert strong").html("Success!");
+          $("#message-alert").fadeIn();
+          $("#message-alert").html("<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button>" + "File uploaded and edited successfully!");          
+          $("#track-two-sample-rate-checkbox").prop("checked", false).trigger("change");
+          $('#slice-trim-two-checkbox').prop("checked", false).trigger("change");
+          $('#track-two-volume-checkbox').prop("checked", false).trigger("change");
+          $('html, body').animate({ scrollTop: $('#message-alert').offset().top }, 'slow');
+          // Clear the previous waveform if it exists
+          if (wavesurferTwo !== null) {
+              wavesurferTwo.destroy();
+          }
+
+            // Create a new wavesurfer instance and load the file
+            wavesurferTwo = WaveSurfer.create({
+              container: "#waveform-two",
+              waveColor: "blue",
+              progressColor: "purple",
+              barWidth: 2
+            });
+
+            wavesurferTwo.load(response.data.fileUrl);
+
+            // Play button event handler
+            $("#play-button-two i").removeClass("fa-pause").addClass("fa-play");
+            $("#play-button-two").off("click").on("click", function () {
+              if (wavesurferTwo.isPlaying()) {
+                wavesurferTwo.pause();
+                $("#play-button-two i").removeClass("fa-pause").addClass("fa-play");
+              } else {
+                wavesurferTwo.play();
+                $("#play-button-two i").removeClass("fa-play").addClass("fa-pause");
+              }
+            });
+
+            // Rewind button event handler
+            $("#rewind-button-two").click(function () {
+              wavesurferTwo.skipBackward(5);
+            });
+
+            // Forward button event handler
+            $("#forward-button-two").click(function () {
+              wavesurferTwo.skipForward(5);
+            });            
+        } else {
+          $("#message-alert").removeClass("alert-success alert-danger").addClass("alert-danger");
+          $("#message-alert strong").html("Error!");
+          $("#message-alert").fadeIn();
+          $("#message-alert").html("<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button>" + response.error);          
+          $('html, body').animate({ scrollTop: $('#message-alert').offset().top }, 'slow');
+        }
+      },
+      error: function() {
+        $("#message-alert").removeClass("alert-success alert-danger").addClass("alert-danger");
+        $("#message-alert strong").html("Error!");
+        $("#message-alert").fadeIn();
+        $("#message-alert").html("<button type='button' class='close' data-dismiss='alert' aria-label='Close'><span aria-hidden='true'>&times;</span></button>" + "Failed to upload and edit the file.");          
+        $('html, body').animate({ scrollTop: $('#message-alert').offset().top }, 'slow');
+      },
+      complete: function() {
+          // Enable the submit button
+          $('#upload-tracktwo-edit-form-submit').prop('disabled', false);
+          // Restore the original text of the submit button
+          $('#upload-tracktwo-edit-form-submit').html('Process');
+          $('#upload-tracktwo-edit-form-submit').find('.fas.fa-spinner.fa-spin').remove();
+      }
+    });
+  });
+});
+
+</script>  
 </body>
 
 </html>
