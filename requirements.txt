@@ -1,0 +1,4 @@
+django
+pydub
+pyrubberband
+numpy
