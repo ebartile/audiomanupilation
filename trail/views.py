@@ -484,8 +484,10 @@ def finalize_track_edit(request):
                 # Create a silent audio segment with the desired duration
                 forward_silent_segment = AudioSegment.silent(duration=setting.fade_in_duration_tracktwo)
                 back_silent_segment = AudioSegment.silent(duration=setting.fade_out_duration_tracktwo)
+                forward_silent_segment_one = AudioSegment.silent(duration=setting.fade_in_duration_trackone)
+                back_silent_segment_one = AudioSegment.silent(duration=setting.fade_out_duration_trackone)
 
-                trackone_audio = forward_silent_segment + trackone_audio + back_silent_segment
+                trackone_audio = forward_silent_segment_one + trackone_audio + back_silent_segment_one
 
                 # Calculate the number of repetitions required
                 repetitions = int(trackone_audio.duration_seconds / tracktwo_audio.duration_seconds) + 1
